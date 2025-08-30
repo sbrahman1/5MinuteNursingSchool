@@ -19,7 +19,7 @@ function App() {
           Hello,Its Mimion !
         </h1>
         <p className="mt-2 hover:text-gray-400 transition-colors duration-300">
-          A tiny little girl ( Who loves alu 🥔).
+          A tiny little girl ( Who loves Alu 🥔).
         </p>
         <button
           onClick={toggleTheme}
