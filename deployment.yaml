@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-shams
+  labels:
+    app: react-shams
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: react-shams
+  template:
+    metadata:
+      labels:
+        app: react-shams
+    spec:
+      containers:
+      - name: react-shams
+        image: shams43/react-shams:latest
+        ports:
+        - containerPort: 80
