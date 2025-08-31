@@ -1,97 +1,79 @@
-// functions/api/admin/posts.js  →  /api/admin/posts
+// functions/api/posts.js
+// Handles:
+//   GET /api/posts
+//   GET /api/posts/:slug
+//   GET /api/posts/:slug/pdf
+//   GET /api/posts/:slug/cover
 
-const json = (obj, status = 200, extraHeaders = {}) =>
+const json = (obj, status = 200, extra = {}) =>
   new Response(JSON.stringify(obj), {
     status,
-    headers: { "Content-Type": "application/json", ...extraHeaders },
+    headers: { "Content-Type": "application/json", ...extra },
   });
 
 export async function onRequest({ request, env }) {
-  if (request.method !== "POST") {
-    return json({ error: "Method Not Allowed" }, 405, { Allow: "POST" });
+  const url = new URL(request.url);
+  // /api/posts[/...]
+  const parts = url.pathname.split("/").filter(Boolean);
+  // parts: ["api","posts", ...]
+  const sub = parts.slice(2); // [...], starting after "api","posts"
+
+  // GET /api/posts  → list
+  if (request.method === "GET" && sub.length === 0) {
+    const { results } = await env.DB.prepare(
+      `SELECT slug, title, summary, cover_key, published_at
+       FROM posts WHERE is_published=1
+       ORDER BY published_at DESC`
+    ).all();
+    return json(results || []);
   }
 
-  try {
-    // ---- Auth
-    const token = request.headers.get("x-admin-token");
-    if (!env.ADMIN_TOKEN) return json({ error: "Server missing ADMIN_TOKEN" }, 500);
-    if (token !== env.ADMIN_TOKEN) return json({ error: "Unauthorized" }, 401);
+  // everything below requires a slug
+  const slug = sub[0];
+  if (!slug) return json({ error: "Not found" }, 404);
 
-    // ---- Parse form
-    const form = await request.formData();
-    const title = String(form.get("title") || "").trim();
-    const summary = String(form.get("summary") || "").trim();
-    const inputSlug = String(form.get("slug") || "").trim();
-    if (!title || !summary) return json({ error: "Missing title/summary" }, 400);
+  // GET /api/posts/:slug/pdf  → stream PDF
+  if (request.method === "GET" && sub[1] === "pdf") {
+    const row = await env.DB.prepare(
+      "SELECT pdf_key FROM posts WHERE slug=? AND is_published=1"
+    ).bind(slug).first();
+    if (!row?.pdf_key) return json({ error: "Not found" }, 404);
 
-    const slugify = (s) =>
-      (s || "")
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-    const slug = slugify(inputSlug || title) || String(Date.now());
+    const obj = await env.BUCKET.get(row.pdf_key);
+    if (!obj) return json({ error: "File missing" }, 404);
 
-    // ---- Validate bindings
-    if (!env.DB) return json({ error: "D1 binding DB not configured" }, 500);
-    if (!env.BUCKET) return json({ error: "R2 binding BUCKET not configured" }, 500);
-
-    // ---- Ensure schema exists (one-time safety)
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS posts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        slug TEXT UNIQUE NOT NULL,
-        title TEXT NOT NULL,
-        summary TEXT NOT NULL,
-        cover_key TEXT,
-        pdf_key TEXT NOT NULL,
-        published_at TEXT NOT NULL DEFAULT (datetime('now')),
-        created_at   TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
-        is_published INTEGER NOT NULL DEFAULT 1
-      );
-    `).run();
-
-    // ---- PDF (required, <= 100MB)
-    const pdf = form.get("pdf");
-    if (!(pdf && pdf.name)) return json({ error: "PDF required" }, 400);
-    if (pdf.size > 100 * 1024 * 1024)
-      return json({ error: "PDF too large (max 100 MB)" }, 400);
-
-    const pdfKey = `pdf/${Date.now()}-${slug}.pdf`;
-    await env.BUCKET.put(pdfKey, await pdf.arrayBuffer(), {
-      httpMetadata: { contentType: "application/pdf" },
+    return new Response(obj.body, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Cache-Control": "public, max-age=3600",
+        "Accept-Ranges": "bytes",
+      },
     });
-
-    // ---- Cover optional (<= 10MB)
-    let coverKey = null;
-    const cover = form.get("cover");
-    if (cover && cover.name) {
-      if (cover.size > 10 * 1024 * 1024)
-        return json({ error: "Cover too large (max 10 MB)" }, 400);
-      const ext = (cover.type?.split("/")[1]) || "jpg";
-      coverKey = `cover/${Date.now()}-${slug}.${ext}`;
-      await env.BUCKET.put(coverKey, await cover.arrayBuffer(), {
-        httpMetadata: { contentType: cover.type || "image/jpeg" },
-      });
-    }
-
-    // ---- Insert row
-    const stmt = env.DB.prepare(
-      `INSERT INTO posts (slug, title, summary, cover_key, pdf_key, is_published)
-       VALUES (?, ?, ?, ?, ?, 1)`
-    );
-    await stmt.bind(slug, title, summary, coverKey, pdfKey).run();
-
-    return json({
-      ok: true,
-      slug,
-      message: "Upload complete",
-      sizeMB: (pdf.size / (1024 * 1024)).toFixed(2),
-    });
-  } catch (err) {
-    // Log to Cloudflare logs for debugging in Dashboard
-    console.error("admin/posts error:", err);
-    return json({ error: "Server error", detail: String(err) }, 500);
   }
+
+  // GET /api/posts/:slug/cover  → stream image (optional)
+  if (request.method === "GET" && sub[1] === "cover") {
+    const row = await env.DB.prepare(
+      "SELECT cover_key FROM posts WHERE slug=? AND is_published=1"
+    ).bind(slug).first();
+    if (!row?.cover_key) return json({ error: "No cover" }, 404);
+
+    const obj = await env.BUCKET.get(row.cover_key);
+    if (!obj) return json({ error: "Missing cover" }, 404);
+
+    // best-effort type (your covers are jpg/png usually)
+    return new Response(obj.body, { headers: { "Content-Type": "image/jpeg" } });
+  }
+
+  // GET /api/posts/:slug  → metadata
+  if (request.method === "GET" && sub.length === 1) {
+    const row = await env.DB.prepare(
+      `SELECT slug, title, summary, pdf_key, cover_key, published_at
+       FROM posts WHERE slug=? AND is_published=1`
+    ).bind(slug).first();
+    if (!row) return json({ error: "Not found" }, 404);
+    return json(row);
+  }
+
+  return json({ error: "Method Not Allowed" }, 405, { Allow: "GET" });
 }
