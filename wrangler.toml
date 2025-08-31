@@ -4,9 +4,6 @@ compatibility_date = "2024-11-20"
 # 👇 tell wrangler where CRA outputs static files ok
 pages_build_output_dir = "build"
 
-[vars]
-ADMIN_TOKEN = "choose-a-long-secret"
-
 [[d1_databases]]
 binding = "DB"
 database_name = "5mns-db"
