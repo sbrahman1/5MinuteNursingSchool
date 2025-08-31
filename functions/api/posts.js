@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 
-const posts = new Hono()
+const app = new Hono()
 
 // List posts
-posts.get('/', async c => {
+app.get('/', async c => {
   const { results } = await c.env.DB.prepare(
     `SELECT slug, title, summary, cover_key, published_at
      FROM posts WHERE is_published=1
@@ -12,8 +12,8 @@ posts.get('/', async c => {
   return c.json(results || [])
 })
 
-// Get one post metadata
-posts.get('/:slug', async c => {
+// Get one post
+app.get('/:slug', async c => {
   const slug = c.req.param('slug')
   const row = await c.env.DB
     .prepare(`SELECT slug, title, summary, pdf_key, cover_key, published_at
@@ -25,12 +25,11 @@ posts.get('/:slug', async c => {
 })
 
 // Stream PDF
-posts.get('/:slug/pdf', async c => {
+app.get('/:slug/pdf', async c => {
   const slug = c.req.param('slug')
   const row = await c.env.DB
     .prepare('SELECT pdf_key FROM posts WHERE slug=? AND is_published=1')
-    .bind(slug)
-    .first()
+    .bind(slug).first()
   if (!row) return c.json({ error: 'Not found' }, 404)
 
   const obj = await c.env.BUCKET.get(row.pdf_key)
@@ -45,22 +44,19 @@ posts.get('/:slug/pdf', async c => {
   })
 })
 
-// Stream cover image
-posts.get('/:slug/cover', async c => {
+// Stream cover (optional)
+app.get('/:slug/cover', async c => {
   const slug = c.req.param('slug')
   const row = await c.env.DB
     .prepare('SELECT cover_key FROM posts WHERE slug=? AND is_published=1')
-    .bind(slug)
-    .first()
+    .bind(slug).first()
 
   if (!row?.cover_key) return c.json({ error: 'No cover' }, 404)
 
   const obj = await c.env.BUCKET.get(row.cover_key)
   if (!obj) return c.json({ error: 'Missing cover' }, 404)
 
-  return new Response(obj.body, {
-    headers: { 'Content-Type': 'image/jpeg' }
-  })
+  return new Response(obj.body, { headers: { 'Content-Type': 'image/jpeg' } })
 })
 
-export default posts
+export const onRequest = app.fetch
