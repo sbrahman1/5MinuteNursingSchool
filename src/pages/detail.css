@@ -1,0 +1,7 @@
+.detail-wrap { min-height:100vh; background: linear-gradient(#ecfdf5,#eff6ff); max-width:1200px; margin:0 auto; padding:24px; display:grid; gap:16px; grid-template-columns: 2fr 1fr; }
+.left .pdf-box { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 6px 16px rgba(0,0,0,.06); padding:8px; overflow:auto; }
+.right { background:rgba(255,255,255,.85); backdrop-filter: blur(4px); border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 6px 16px rgba(0,0,0,.06); padding:20px; }
+.right h1 { margin:0; font-size:1.6rem; }
+.right .date { color:#64748b; margin-top:4px; }
+.right .summary { color:#334155; margin-top:12px; white-space:pre-line; }
+@media (max-width: 960px){ .detail-wrap{ grid-template-columns:1fr; } }

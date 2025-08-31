@@ -1,0 +1,8 @@
+.admin-wrap { max-width:720px; margin:24px auto; padding:16px; }
+.form { display:flex; flex-direction:column; gap:12px; }
+.form input, .form textarea { width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:10px; }
+.row { display:flex; gap:12px; }
+.row > div { flex:1; }
+button { background:#059669; color:#fff; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; }
+button:hover { background:#047857; }
+.msg { margin-top:10px; }
