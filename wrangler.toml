@@ -10,7 +10,7 @@ ADMIN_TOKEN = "choose-a-long-secret"
 [[d1_databases]]
 binding = "DB"
 database_name = "5mns-db"
-database_id = "PUT-YOUR-D1-ID-HERE"
+database_id = "c07c6b33-0e6c-466d-bae5-d928af3f73f0"
 
 [[r2_buckets]]
 binding = "BUCKET"
