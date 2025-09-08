@@ -3,19 +3,37 @@ import { Link } from "react-router-dom";
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
+  const [state, setState] = useState({ loading: true, error: "" });
 
   useEffect(() => {
-    // backend route from Cloudflare Pages Functions (you’ll add later)
-    fetch("/api/posts")
-      .then((r) => r.json())
-      .then(setPosts)
-      .catch(() => setPosts([]));
+    let alive = true;
+    fetch("/api/posts", { headers: { Accept: "application/json" } })
+      .then(async (r) => {
+        if (!r.ok) {
+          const text = await r.text().catch(() => "");
+          throw new Error(`GET /api/posts → HTTP ${r.status} ${text.slice(0,120)}`);
+        }
+        return r.json();
+      })
+      .then((data) => {
+        if (alive) {
+          setPosts(Array.isArray(data) ? data : []);
+          setState({ loading: false, error: "" });
+        }
+      })
+      .catch((e) => {
+        if (alive) setState({ loading: false, error: e.message || "Failed to load" });
+      });
+    return () => { alive = false; };
   }, []);
+
+  if (state.loading) return <div className="p-6">Loading…</div>;
+  if (state.error) return <div className="p-6 text-red-600">Error: {state.error}</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-emerald-50">
-      <header className="py-10 text-center">
-        <h1 className="text-4xl font-bold">Study notes</h1>
+      <header className="max-w-5xl mx-auto p-6 text-center">
+        <h1 className="text-3xl font-extrabold">Study notes</h1>
         <p className="text-gray-600 mt-2">
           Dive into a world of study, life, nursing, and art
         </p>
@@ -31,16 +49,26 @@ export default function Home() {
           <Link
             key={p.slug}
             to={`/home/${p.slug}`}
-            className="group border rounded-2xl bg-white/80 backdrop-blur shadow hover:shadow-lg transition transform hover:-translate-y-0.5 p-6"
+            className="group border rounded-2xl bg-white/80 backdrop-blur shadow hover:shadow-lg transition overflow-hidden"
           >
-            <h2 className="text-xl font-semibold group-hover:text-emerald-700">
-              {p.title}
-            </h2>
-            <p className="text-gray-600 mt-2 line-clamp-3">{p.summary}</p>
-            <div className="text-sm text-gray-500 mt-3">
-              {p.published_at
-                ? new Date(p.published_at).toLocaleDateString()
-                : ""}
+            {p.cover_key ? (
+              <img
+                src={`/api/posts/${p.slug}/cover`}
+                alt=""
+                className="w-full h-48 object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
+                No image
+              </div>
+            )}
+            <div className="p-4">
+              <div className="text-xs text-gray-500">
+                {p.published_at ? new Date(p.published_at).toLocaleDateString() : ""}
+              </div>
+              <div className="text-lg font-semibold mt-1">{p.title}</div>
+              <div className="text-sm text-gray-600 mt-2 line-clamp-3">{p.summary}</div>
             </div>
           </Link>
         ))}
