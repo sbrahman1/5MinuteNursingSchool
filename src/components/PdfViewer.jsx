@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
-// PDF.js CSS (recommended by react-pdf)
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
+// OPTIONAL STYLES — use the non-esm paths
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
-// ✅ Use unpkg, pinned to the installed pdfjs-dist version
+// Worker: pin to the installed pdfjs-dist version
 pdfjs.GlobalWorkerOptions.workerSrc =
   `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
