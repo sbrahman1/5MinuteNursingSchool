@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
-// OPTIONAL STYLES — use the non-esm paths
+// (Optional) these styles are nice-to-have; remove if they ever break builds
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-// Worker: pin to the installed pdfjs-dist version
-pdfjs.GlobalWorkerOptions.workerSrc =
-  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// ✅ Load worker from same origin (no CORS/module issues)
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 export default function PdfViewer({ src, width = 820, height = "80vh" }) {
   const [numPages, setNumPages] = useState(null);
