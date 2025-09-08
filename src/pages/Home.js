@@ -66,9 +66,9 @@ function Footer() {
           <p className="text-sm">Dhaka, Bangladesh</p>
         </div>
         <div className="flex items-start gap-4 text-2xl">
-          <a href="https://youtube.com/@5MinuteNursingSchool" target="_blank" rel="noreferrer" aria-label="YouTube">📺</a>
-          <a href="https://instagram.com/" target="_blank" rel="noreferrer" aria-label="Instagram">📸</a>
-          <a href="https://pinterest.com/" target="_blank" rel="noreferrer" aria-label="Pinterest">📌</a>
+          <a href="https://youtube.com/@Caffei_N" target="_blank" rel="noreferrer" aria-label="YouTube">📺</a>
+          <a href="https://www.instagram.com/caffei_n_" target="_blank" rel="noreferrer" aria-label="Instagram">📸</a>
+          <a href="https://pinterest.com/caffei_N" target="_blank" rel="noreferrer" aria-label="Pinterest">📌</a>
           <a href="https://x.com/" target="_blank" rel="noreferrer" aria-label="X">𝕏</a>
         </div>
       </div>
