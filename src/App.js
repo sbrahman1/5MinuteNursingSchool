@@ -1,7 +1,5 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-import Landing from "./pages/Home";          // or your landing component
 import Home from "./pages/Home";
 import NoteDetail from "./pages/NoteDetail";
 import Admin from "./pages/Admin";           // <-- only this one
