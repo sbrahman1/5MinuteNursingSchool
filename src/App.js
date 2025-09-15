@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 
 import Home from "./pages/Home";
 import NoteDetail from "./pages/NoteDetail";
@@ -11,29 +11,27 @@ export default function App() {
   const toggleTheme = () => setDarkMode((v) => !v);
 
   return (
-    <BrowserRouter>
-      <div
-        className={`min-h-screen transition-all duration-500 ${
-          darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-        }`}
-      >
-        <Routes>
-          <Route
-            path="/"
-            element={<Landing darkMode={darkMode} toggleTheme={toggleTheme} />}
-          />
-          <Route path="/home" element={<Home />} />
-          <Route path="/home/:slug" element={<NoteDetail />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/edit/:slug" element={<AdminEdit />} />
-          <Route path="*" element={<div style={{ padding: 24 }}>Not found</div>} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+    <div
+      className={`min-h-screen transition-all duration-500 ${
+        darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+      }`}
+    >
+      <Routes>
+        <Route
+          path="/"
+          element={<Landing darkMode={darkMode} toggleTheme={toggleTheme} />}
+        />
+        <Route path="/home" element={<Home />} />
+        <Route path="/home/:slug" element={<NoteDetail />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/edit/:slug" element={<AdminEdit />} />
+        <Route path="*" element={<div style={{ padding: 24 }}>Not found</div>} />
+      </Routes>
+    </div>
   );
 }
 
-// Inline landing page
+// Inline landing page shown at "/"
 function Landing({ darkMode, toggleTheme }) {
   return (
     <div className="flex items-center justify-center min-h-[80vh] p-4 transition-all duration-500">
