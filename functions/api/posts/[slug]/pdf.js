@@ -19,11 +19,11 @@ export async function onRequest({ request, env, params }) {
     // Many browsers request partial ranges for PDFs.
     const range = request.headers.get("Range");
     const baseHeaders = {
-      "Content-Type": "application/pdf",
-      "Accept-Ranges": "bytes",
-      "Cache-Control": "public, max-age=3600",
-      // show inline in viewer with a nice filename
-      "Content-Disposition": `inline; filename="${slug}.pdf"`,
+       "Content-Type": "application/pdf",
+       "Content-Disposition": `inline; filename="${slug}.pdf"`,
+       "Accept-Ranges": "bytes",
+       "X-Content-Type-Options": "nosniff",
+       "Cache-Control": "no-store, max-age=0",
     };
 
     // Get object size first
