@@ -22,7 +22,7 @@ code {
   user-select: none;
 }
 
-/* Hide the viewer when someone tries to print */
+/* Hide the viewer on print */
 @media print {
   .no-print { display: none !important; }
 }
