@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
+import Admin from "./pages/Admin";
+import AdminEdit from "./pages/AdminEdit";
 
 // Pages (add the files below)
 import Home from "./pages/Home";
@@ -30,6 +32,10 @@ function App() {
         <Route path="/admin" element={<Admin />} />
         {/* Optional: catch-all redirect to "/" */}
         {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+         {/* existing routes */}
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/edit/:slug" element={<AdminEdit />} />
+  {/* ... */}
       </Routes>
     </div>
   );
