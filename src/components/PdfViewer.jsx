@@ -1,12 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
-import * as pdfjsLib from "pdfjs-dist/build/pdf"; // direct pdf.js (no react-pdf)
+// Import the ESM build of pdf.js
+import * as pdfjsLib from "pdfjs-dist/build/pdf.mjs";
 
-// Use the local worker you vendored in /public
-pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+// Create (and reuse) a module worker from our own domain
+let sharedWorker;
+function getPdfWorker() {
+  if (!sharedWorker) {
+    sharedWorker = new Worker("/pdf.worker.min.mjs", { type: "module" });
+  }
+  return sharedWorker;
+}
 
 /**
  * Canvas PDF viewer: no download/print UI, selection disabled, right-click blocked.
- * Allows jumping to a page. Fits width of the container.
+ * Allows going to a specific page. Fits to container width.
  */
 export default function PdfViewer({ src, height = "80vh" }) {
   const shellRef = useRef(null);
@@ -16,15 +23,18 @@ export default function PdfViewer({ src, height = "80vh" }) {
   const [page, setPage] = useState(1);
   const [err, setErr] = useState("");
 
-  // Block common save/print shortcuts while focused
+  // Block common save/print shortcuts
   const onKeyDown = (e) => {
     const k = e.key.toLowerCase();
-    if ((e.ctrlKey || e.metaKey) && (k === "s" || k === "p" || k === "o")) {
-      e.preventDefault();
-    }
+    if ((e.ctrlKey || e.metaKey) && (k === "s" || k === "p" || k === "o")) e.preventDefault();
   };
 
-  // Load the PDF document
+  // Point pdf.js at our module worker
+  useEffect(() => {
+    pdfjsLib.GlobalWorkerOptions.workerPort = getPdfWorker();
+  }, []);
+
+  // Load the PDF
   useEffect(() => {
     let cancelled = false;
     setErr("");
@@ -32,29 +42,24 @@ export default function PdfViewer({ src, height = "80vh" }) {
     setNumPages(0);
     setPage(1);
 
-    const loadingTask = pdfjsLib.getDocument({
+    const task = pdfjsLib.getDocument({
       url: src,
-      // With your server-side Range support, streaming works well:
       rangeChunkSize: 65536,
       disableAutoFetch: false,
       disableStream: false,
-      withCredentials: false
     });
 
-    loadingTask.promise
+    task.promise
       .then((pdf) => {
         if (cancelled) return;
         setDoc(pdf);
         setNumPages(pdf.numPages);
       })
-      .catch((e) => {
-        if (cancelled) return;
-        setErr(e?.message || String(e));
-      });
+      .catch((e) => !cancelled && setErr(e?.message || String(e)));
 
     return () => {
       cancelled = true;
-      try { loadingTask.destroy(); } catch {}
+      try { task.destroy(); } catch {}
     };
   }, [src]);
 
@@ -69,48 +74,32 @@ export default function PdfViewer({ src, height = "80vh" }) {
         if (cancelled) return;
 
         const containerWidth = shellRef.current.clientWidth || 800;
-        const viewportAtScale1 = pdfPage.getViewport({ scale: 1 });
-        const scale = containerWidth / viewportAtScale1.width;
+        const viewport1 = pdfPage.getViewport({ scale: 1 });
+        const scale = containerWidth / viewport1.width;
         const viewport = pdfPage.getViewport({ scale });
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d", { alpha: false });
-
         canvas.width = Math.floor(viewport.width);
         canvas.height = Math.floor(viewport.height);
 
-        // High-quality rendering
-        const renderTask = pdfPage.render({
-          canvasContext: ctx,
-          viewport,
-          intent: "display"
-        });
+        const renderTask = pdfPage.render({ canvasContext: ctx, viewport, intent: "display" });
         await renderTask.promise;
       } catch (e) {
         if (!cancelled) setErr(e?.message || String(e));
       }
     })();
 
-    // Re-render on container resize
-    const observer = new ResizeObserver(() => {
-      // trigger re-render by updating page (same value)
-      setPage((p) => p);
-    });
-    observer.observe(shellRef.current);
+    const ro = new ResizeObserver(() => setPage((p) => p)); // trigger re-render
+    ro.observe(shellRef.current);
 
     return () => {
       cancelled = true;
-      try { observer.disconnect(); } catch {}
+      try { ro.disconnect(); } catch {}
     };
   }, [doc, page]);
 
-  if (err) {
-    return (
-      <div className="p-4 text-red-600">
-        Failed to load PDF: {err}
-      </div>
-    );
-  }
+  if (err) return <div className="p-4 text-red-600">Failed to load PDF: {err}</div>;
 
   return (
     <div
@@ -118,21 +107,21 @@ export default function PdfViewer({ src, height = "80vh" }) {
       className="pdf-shell no-print select-none"
       style={{
         height,
-        borderRadius: "8px",
+        borderRadius: 8,
         border: "1px solid #e5e7eb",
         background: "#fff",
-        overflow: "auto", // scroll outer container
+        overflow: "auto",
         position: "relative",
       }}
       onContextMenu={(e) => e.preventDefault()}
       onKeyDown={onKeyDown}
-      tabIndex={0} // focus to capture keydown
+      tabIndex={0}
     >
-      {/* Minimal pager — only "go to page" allowed */}
+      {/* Minimal pager */}
       <div
         className="absolute top-2 right-2 z-10"
         style={{
-          background: "rgba(255,255,255,0.9)",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid #e5e7eb",
           borderRadius: 8,
           padding: "6px 8px",
@@ -174,12 +163,7 @@ export default function PdfViewer({ src, height = "80vh" }) {
         </button>
       </div>
 
-      {/* Rendered page */}
-      <div
-        className="flex items-start justify-center p-4"
-        onContextMenu={(e) => e.preventDefault()}
-        style={{ userSelect: "none" }}
-      >
+      <div className="flex items-start justify-center p-4" style={{ userSelect: "none" }}>
         <canvas ref={canvasRef} style={{ display: "block" }} />
       </div>
     </div>
