@@ -15,3 +15,14 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+/* Disable text selection inside the viewer */
+.pdf-shell, .pdf-shell * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Hide the viewer when someone tries to print */
+@media print {
+  .no-print { display: none !important; }
+}
