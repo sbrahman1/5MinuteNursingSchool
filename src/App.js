@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
-import Admin from "./pages/Admin";
 import AdminEdit from "./pages/AdminEdit";
 
 // Pages (add the files below)
