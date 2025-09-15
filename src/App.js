@@ -32,7 +32,6 @@ function App() {
         {/* Optional: catch-all redirect to "/" */}
         {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
          {/* existing routes */}
-        <Route path="/admin" element={<Admin />} />
         <Route path="/admin/edit/:slug" element={<AdminEdit />} />
   {/* ... */}
       </Routes>
