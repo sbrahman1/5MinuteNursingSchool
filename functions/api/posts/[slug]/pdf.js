@@ -57,8 +57,12 @@ export async function onRequest({ request, env, params }) {
         status: 206,
         headers: {
           ...baseHeaders,
-          "Content-Range": `bytes ${start}-${end}/${size}`,
-          "Content-Length": String(length),
+          "Accept-Ranges": "bytes",
+          "X-Content-Type-Options": "nosniff",
+         // discourage caching of sensitive notes
+          "Cache-Control": "no-store, max-age=0",
+          // show inline in viewer
+          "Content-Disposition": `inline; filename="${slug}.pdf"`,
         },
       });
     }
@@ -71,8 +75,13 @@ export async function onRequest({ request, env, params }) {
     return new Response(full.body, {
       status: 200,
       headers: {
-        ...baseHeaders,
-        "Content-Length": String(size),
+          ...baseHeaders,
+          "Accept-Ranges": "bytes",
+          "X-Content-Type-Options": "nosniff",
+         // discourage caching of sensitive notes
+          "Cache-Control": "no-store, max-age=0",
+          // show inline in viewer
+          "Content-Disposition": `inline; filename="${slug}.pdf"`,
       },
     });
   } catch (e) {
