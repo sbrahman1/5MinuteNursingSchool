@@ -1,45 +1,42 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+
 import Home from "./pages/Home";
 import NoteDetail from "./pages/NoteDetail";
-import Admin from "./pages/Admin";           // <-- only this one
-import AdminEdit from "./pages/AdminEdit";   // new editor
+import Admin from "./pages/Admin";
+import AdminEdit from "./pages/AdminEdit";
 
-function App() {
-  const [darkMode, setDarkMode] = useState(false); // ✅ State to track theme
-
-  const toggleTheme = () => setDarkMode(!darkMode);
+export default function App() {
+  const [darkMode, setDarkMode] = useState(false);
+  const toggleTheme = () => setDarkMode((v) => !v);
 
   return (
-    <div
-      className={`min-h-screen transition-all duration-500 ${
-        darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-      }`}
-    >
-      {/* Landing section always visible on "/" */}
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <Landing darkMode={darkMode} toggleTheme={toggleTheme} />
-          }
-        />
-        <Route path="/home" element={<Home />} />
-        <Route path="/home/:slug" element={<NoteDetail />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/edit/:slug" element={<AdminEdit />} />
-        <Route path="*" element={<div style={{padding:24}}>Not found</div>} />
-  {/* ... */}
-      </Routes>
-    </div>
+    <BrowserRouter>
+      <div
+        className={`min-h-screen transition-all duration-500 ${
+          darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+        }`}
+      >
+        <Routes>
+          <Route
+            path="/"
+            element={<Landing darkMode={darkMode} toggleTheme={toggleTheme} />}
+          />
+          <Route path="/home" element={<Home />} />
+          <Route path="/home/:slug" element={<NoteDetail />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/edit/:slug" element={<AdminEdit />} />
+          <Route path="*" element={<div style={{ padding: 24 }}>Not found</div>} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
+// Inline landing page
 function Landing({ darkMode, toggleTheme }) {
   return (
-    <div
-      className={`flex items-center justify-center min-h-[80vh] p-4 transition-all duration-500`}
-    >
+    <div className="flex items-center justify-center min-h-[80vh] p-4 transition-all duration-500">
       <div
         className={`shadow-lg rounded-2xl p-6 max-w-md text-center transition-transform duration-300 hover:scale-105 ${
           darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"
@@ -63,7 +60,6 @@ function Landing({ darkMode, toggleTheme }) {
           Toggle {darkMode ? "Light" : "Dark"} Mode
         </button>
 
-        {/* New button that routes to /home */}
         <div className="mt-4">
           <Link
             to="/home"
@@ -76,6 +72,3 @@ function Landing({ darkMode, toggleTheme }) {
     </div>
   );
 }
-
-export default App;
-  
