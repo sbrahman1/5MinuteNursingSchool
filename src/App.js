@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { Routes, Route, Link } from "react-router-dom";
-import AdminEdit from "./pages/AdminEdit";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Pages (add the files below)
+import Landing from "./pages/Home";          // or your landing component
 import Home from "./pages/Home";
 import NoteDetail from "./pages/NoteDetail";
-import Admin from "./pages/Admin";
+import Admin from "./pages/Admin";           // <-- only this one
+import AdminEdit from "./pages/AdminEdit";   // new editor
 
 function App() {
   const [darkMode, setDarkMode] = useState(false); // ✅ State to track theme
@@ -29,10 +29,8 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/home/:slug" element={<NoteDetail />} />
         <Route path="/admin" element={<Admin />} />
-        {/* Optional: catch-all redirect to "/" */}
-        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
-         {/* existing routes */}
         <Route path="/admin/edit/:slug" element={<AdminEdit />} />
+        <Route path="*" element={<div style={{padding:24}}>Not found</div>} />
   {/* ... */}
       </Routes>
     </div>
